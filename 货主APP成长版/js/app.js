@@ -2049,7 +2049,7 @@ class App {
             </div>
             `;
 
-        document.getElementById('back-to-profile-edit-from-ent').onclick = () => this.navigate('profileEdit');
+        document.getElementById('back-to-profile-edit-from-ent').onclick = () => this.navigate('profile');
         document.getElementById('submit-ent-auth').onclick = () => {
             const name = document.getElementById('ent-name-input').value;
             const code = document.getElementById('ent-code-input').value;
@@ -2857,29 +2857,64 @@ class App {
                     <!-- Track info -->
                     <div style="margin: 20px 0 8px; padding-left: 4px; font-size: 14px; color: #666; font-weight: bold;">物流轨迹</div>
                     <div class="card" style="padding: 20px;">
-                        <div style="display: flex; gap: 16px;">
-                            <div style="display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 12px; height: 12px; background: var(--primary-color); border-radius: 50%; box-shadow: 0 0 0 4px rgba(37,99,235,0.1);"></div>
-                                <div style="width: 2px; flex: 1; background: #f0f0f0; margin: 4px 0;"></div>
-                            </div>
-                            <div style="padding-bottom: 24px;">
-                                <div style="color: #333; font-weight: bold; font-size: 14px;">运输中</div>
-                                <div style="color: #999; font-size: 12px; margin-top: 4px;">包裹正在通过 深圳市 龙华区，前往下一站</div>
-                                <div style="color: #ccc; font-size: 11px; margin-top: 4px;">2024-01-02 18:30:25</div>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 16px;">
-                            <div style="display: flex; flex-direction: column; align-items: center;">
-                                <div style="width: 10px; height: 10px; background: #ddd; border-radius: 50%;"></div>
-                            </div>
-                            <div>
-                                <div style="color: #666; font-size: 14px;">已装货</div>
-                                <div style="color: #ccc; font-size: 11px; margin-top: 4px;">2024-01-02 10:15:00</div>
-                            </div>
-                        </div>
+                        ${this.renderTrackingSteps(wb.status, wb.date)}
+                    </div>
                 </div>
+
             </div>
         `;
+    }
+
+    renderTrackingSteps(currentKind, date) {
+        // Define all possible steps in order
+        const allSteps = [
+            { id: '未接单', title: '订单已创建', desc: '等待司机接单' },
+            { id: '已接单', title: '司机已接单', desc: '司机正赶往装货地' },
+            { id: '待装货', title: '司机已到达', desc: '等待装货中' },
+            { id: '运输中', title: '运输中', desc: '包裹正在运输途中' },
+            { id: '已签收', title: '已签收', desc: '客户已签收' },
+            { id: '已回单', title: '已回单', desc: '回单已上传' },
+            { id: '已结算', title: '已结算', desc: '运费已结算' },
+            { id: '已取消', title: '已取消', desc: '订单已取消' }
+        ];
+
+        // Find index of current status
+        let currentIndex = allSteps.findIndex(s => s.id === currentKind);
+        if (currentIndex === -1) currentIndex = 0; // Default to first if unknown
+
+        let displaySteps = [];
+        if (currentKind === '已取消') {
+            displaySteps = [
+                { id: '未接单', title: '订单已创建', desc: '您已发布运单', time: date + ' 10:00:00' },
+                { id: '已取消', title: '已取消', desc: '订单已取消', time: date + ' 10:05:00' }
+            ];
+            currentIndex = 1;
+        } else {
+            displaySteps = allSteps.slice(0, currentIndex + 1).reverse(); // Show latest first
+        }
+
+        return displaySteps.map((step, i) => {
+            const isLatest = i === 0;
+            const isLast = i === displaySteps.length - 1;
+
+            // Mock times based on date
+            // Latest is now, previous are hours ago
+            const time = step.time || (isLatest ? new Date().toLocaleString() : date + ' 12:00:00');
+
+            return `
+                <div style="display: flex; gap: 16px;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: ${isLatest ? '12px' : '10px'}; height: ${isLatest ? '12px' : '10px'}; background: ${isLatest ? 'var(--primary-color)' : '#ddd'}; border-radius: 50%; ${isLatest ? 'box-shadow: 0 0 0 4px rgba(37,99,235,0.1);' : ''}"></div>
+                        ${!isLast ? '<div style="width: 2px; flex: 1; background: #f0f0f0; margin: 4px 0;"></div>' : ''}
+                    </div>
+                    <div style="padding-bottom: ${isLast ? '0' : '24px'};">
+                        <div style="color: ${isLatest ? '#333' : '#666'}; font-weight: ${isLatest ? 'bold' : 'normal'}; font-size: 14px;">${step.title}</div>
+                        <div style="color: #999; font-size: 12px; margin-top: 4px;">${step.desc}</div>
+                        <div style="color: #ccc; font-size: 11px; margin-top: 4px;">${time}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     renderFrequentRoutes() {
@@ -2994,8 +3029,13 @@ class App {
         document.getElementById('new-location-trigger').onclick = () => {
             // Re-use logic for picking city but update this specific field
             const provs = ['广东省', '江苏省', '浙江省'];
-            const cts = { '广东省': ['深圳市', '广州市'], '江苏省': ['南京市'] };
-            const dsts = { '深圳市': ['龙华区', '南山区'] };
+            const cts = { '广东省': ['深圳市', '广州市'], '江苏省': ['南京市'], '浙江省': ['杭州市'] };
+            const dsts = {
+                '深圳市': ['龙华区', '南山区'],
+                '广州市': ['天河区', '越秀区'],
+                '南京市': ['玄武区', '秦淮区'],
+                '杭州市': ['西湖区', '上城区']
+            };
 
             const locPicker = document.createElement('div');
             locPicker.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 3000; display: flex; flex-direction: column; justify-content: flex-end;';

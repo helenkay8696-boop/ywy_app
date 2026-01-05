@@ -64,6 +64,61 @@ const MockData = {
             driver: '张师傅',
             plate: '粤A·12345',
             date: '2023-12-20'
+        },
+        {
+            id: 'WB20240101001',
+            status: '未接单',
+            origin: '深圳市',
+            destination: '东莞市',
+            cargo: '塑料制品',
+            weight: '3吨',
+            driver: '',
+            plate: '',
+            date: '2024-01-01'
+        },
+        {
+            id: 'WB20240102002',
+            status: '已接单',
+            origin: '珠海市',
+            destination: '中山市',
+            cargo: '五金配件',
+            weight: '1.5吨',
+            driver: '赵师傅',
+            plate: '粤C·99999',
+            date: '2024-01-02'
+        },
+        {
+            id: 'WB20240103003',
+            status: '已回单',
+            origin: '佛山市',
+            destination: '肇庆市',
+            cargo: '陶瓷',
+            weight: '10吨',
+            driver: '孙师傅',
+            plate: '粤E·55555',
+            date: '2024-01-03'
+        },
+        {
+            id: 'WB20240104004',
+            status: '已结算',
+            origin: '惠州市',
+            destination: '河源市',
+            cargo: '电子产品',
+            weight: '2吨',
+            driver: '周师傅',
+            plate: '粤L·77777',
+            date: '2024-01-04'
+        },
+        {
+            id: 'WB20240105005',
+            status: '已取消',
+            origin: '江门市',
+            destination: '阳江市',
+            cargo: '海鲜',
+            weight: '1吨',
+            driver: '',
+            plate: '',
+            date: '2024-01-05'
         }
     ],
     statements: [
