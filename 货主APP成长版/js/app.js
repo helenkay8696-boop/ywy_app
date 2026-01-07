@@ -7,7 +7,7 @@ class App {
         this.shipForm = {
             vehicleLength: '5',
             vehicleType: '普通货车',
-            invoiceType: '不开发票',
+            invoiceType: '不开回单',
             notes: ['无需司机装卸'],
             pricingOption: '整车发货',
             cargoName: '配件零件',
@@ -370,10 +370,15 @@ class App {
 
                     <div class="card">
                          <div class="flex justify-between items-center" style="padding: 12px 0; border-bottom: 1px solid #f9f9f9;">
-                            <span style="color: var(--text-secondary);">发票类型</span>
-                            <div class="select-btn-group" id="invoice-toggles">
-                                <div class="select-btn ${form.invoiceType === '专票' ? 'active' : ''}" data-val="专票">专票</div>
-                                <div class="select-btn ${form.invoiceType === '不开发票' ? 'active' : ''}" data-val="不开发票">不开发票</div>
+                            <span style="color: var(--text-secondary);">回单类型</span>
+                            <div style="position: relative;">
+                                <select id="invoice-select" style="appearance: none; -webkit-appearance: none; background: transparent; border: none; font-size: 14px; color: var(--text-main); font-weight: 500; text-align: right; padding-right: 20px; outline: none; direction: rtl;">
+                                    <option value="需要回单" ${form.invoiceType === '需要回单' ? 'selected' : ''}>需要回单</option>
+                                    <option value="仅需要电子回单" ${form.invoiceType === '仅需要电子回单' ? 'selected' : ''}>仅需要电子回单</option>
+                                    <option value="仅需要纸质回单" ${form.invoiceType === '仅需要纸质回单' ? 'selected' : ''}>仅需要纸质回单</option>
+                                    <option value="不需要回单" ${form.invoiceType === '不需要回单' ? 'selected' : ''}>不需要回单</option>
+                                </select>
+                                <span class="material-icons" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--text-secondary); pointer-events: none;">chevron_right</span>
                             </div>
                         </div>
                         <div class="flex justify-between items-center" style="padding: 12px 0; border-bottom: 1px solid #f9f9f9; cursor: pointer;" id="pickup-time-trigger">
@@ -389,7 +394,7 @@ class App {
                     <div class="card">
                         <div style="margin-bottom: 12px; font-weight: bold; font-size: 15px;">备注说明</div>
                         <div class="select-btn-group" id="note-toggles">
-                            ${['无需司机装卸', '到付', '三不招', '需回单', '车厢干净', '禁区'].map(note => `
+                            ${['无需司机装卸', '到付', '三不招', '车厢干净', '禁区'].map(note => `
                                 <div class="select-btn ${form.notes.includes(note) ? 'active' : ''}" data-val="${note}" style="border-radius: 4px; padding: 6px 12px; font-size: 12px;">${note}</div>
                             `).join('')}
                         </div>
@@ -460,12 +465,11 @@ class App {
         document.getElementById('pickup-time-trigger').onclick = () => this.navigate('timePicker', { type: 'pickup' });
         document.getElementById('delivery-time-trigger').onclick = () => this.navigate('timePicker', { type: 'delivery' });
 
-        document.querySelectorAll('#invoice-toggles .select-btn').forEach(btn => {
-            btn.onclick = () => {
-                this.shipForm.invoiceType = btn.dataset.val;
-                this.renderShip();
-            };
-        });
+        document.getElementById('invoice-select').onchange = (e) => {
+            this.shipForm.invoiceType = e.target.value;
+            // No need to re-render simply for saving value, but if UI depends on it elsewhere we might. 
+            // Here we just update the model. The select itself already shows the new value.
+        };
 
         document.querySelectorAll('#note-toggles .select-btn').forEach(btn => {
             btn.onclick = () => {
@@ -867,7 +871,7 @@ class App {
             <div class="bg-light" style="min-height: 100%; padding-bottom: 0;" >
                 <div class="container">
                     <header style="padding: 16px 0;">
-                        <h2 style="font-size: 22px; font-weight: bold; margin: 0; color: #333;">我的运单</h2>
+                        <h2 style="font-size: 22px; font-weight: bold; margin: 0; color: #333;">我的货单</h2>
                     </header>
 
                     <!-- Status Tabs from Image -->
@@ -881,7 +885,7 @@ class App {
                         ${MockData.waybills
                 .filter(wb => status === '全部' || wb.status === status)
                 .map(wb => this.renderWaybillCard(wb)).join('')}
-                        ${MockData.waybills.filter(wb => status === '全部' || wb.status === status).length === 0 ? '<div style="text-align: center; padding: 40px; color: #999;">暂无相关运单</div>' : ''}
+                        ${MockData.waybills.filter(wb => status === '全部' || wb.status === status).length === 0 ? '<div style="text-align: center; padding: 40px; color: #999;">暂无相关货单</div>' : ''}
                     </div>
                 </div>
             </div>
@@ -1549,8 +1553,8 @@ class App {
                     if (paymentModal) {
                         paymentModal.style.display = 'flex';
                         const modalHeader = paymentModal.querySelector('.modal-header-custom h3');
-                        const qrImg = paymentModal.querySelector('.payment-qr img');
-                        const amountText = document.getElementById('payment-modal-amount');
+                        const qrContainer = paymentModal.querySelector('.payment-qr');
+                        // const amountText = document.getElementById('payment-modal-amount'); // Re-created inside innerHTML
 
                         let paymentName = '支付宝';
                         if (selectedPaymentMethod === 'wechat') paymentName = '微信';
@@ -1558,8 +1562,23 @@ class App {
                         else if (selectedPaymentMethod === 'other') paymentName = '其他支付';
 
                         if (modalHeader) modalHeader.textContent = `${paymentName}支付`;
-                        if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://pay.com/${selectedPaymentMethod}`;
-                        if (amountText) amountText.textContent = `¥${selectedAmount.toFixed(2)}`;
+
+                        if (selectedPaymentMethod === 'alipay' || selectedPaymentMethod === 'wechat') {
+                            qrContainer.innerHTML = `
+                                <div style="padding: 40px 0; text-align: center;">
+                                    <span class="material-icons" style="font-size: 48px; color: var(--primary-color); margin-bottom: 16px;">touch_app</span>
+                                    <div style="font-size: 16px; color: #333; font-weight: bold; margin-bottom: 8px;">正在拉起${paymentName}支付...</div>
+                                    <p style="color: #999; font-size: 12px; margin-bottom: 24px;">支付完成后请点击下方"已完成支付"</p>
+                                    <p>支付金额：<strong id="payment-modal-amount" style="font-size: 20px; color: #333;">¥${selectedAmount.toFixed(2)}</strong></p>
+                                </div>
+                             `;
+                        } else {
+                            qrContainer.innerHTML = `
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://pay.com/${selectedPaymentMethod}" alt="QR">
+                                <p>请扫描二维码完成支付</p>
+                                <p>支付金额：<strong id="payment-modal-amount">¥${selectedAmount.toFixed(2)}</strong></p>
+                            `;
+                        }
                     }
                 }
             };
@@ -1641,10 +1660,31 @@ class App {
         const finishBtn = document.getElementById('finishWithdrawBtn');
         const successAmountDisplay = document.getElementById('withdrawSuccessAmount');
 
+        // Logic to calculate frozen funds
+        const getFrozenAmount = () => {
+            // Statuses that imply pending payment or liability
+            const frozenStatuses = ['未接单', '已接单', '待装货', '运输中', '已签收', '已回单'];
+            return MockData.waybills
+                .filter(wb => frozenStatuses.includes(wb.status))
+                .reduce((sum, wb) => sum + (wb.price || 0), 0);
+        };
+
         const validateInput = () => {
             if (!input || !confirmBtn) return;
             const amount = parseFloat(input.value);
-            const currentBal = MockData.user.balance || 0;
+            const totalBalance = MockData.user.balance || 0;
+            const frozenAmount = getFrozenAmount();
+            const availableBalance = Math.max(0, totalBalance - frozenAmount);
+
+            // Update hint UI
+            const hintEl = document.getElementById('withdrawBalanceHint');
+            if (hintEl) {
+                hintEl.innerHTML = `
+                    <div>总余额 ¥${totalBalance.toFixed(2)}</div>
+                    <div style="color: #999; font-size: 11px;">(冻结 ¥${frozenAmount.toFixed(2)}，需支付在途运费)</div>
+                    <div style="color: var(--primary-color); font-weight: bold; margin-top: 2px;">可提现余额 ¥${availableBalance.toFixed(2)}</div>
+                 `;
+            }
 
             if (!amount || amount <= 0) {
                 confirmBtn.style.background = '#ccc';
@@ -1653,8 +1693,11 @@ class App {
                 return;
             }
 
-            if (amount > currentBal) {
-                if (errorMsg) errorMsg.style.display = 'block';
+            if (amount > availableBalance) {
+                if (errorMsg) {
+                    errorMsg.innerText = '输入金额超过可提现余额';
+                    errorMsg.style.display = 'block';
+                }
                 confirmBtn.style.background = '#ccc';
                 confirmBtn.style.pointerEvents = 'none';
             } else {
@@ -1685,8 +1728,11 @@ class App {
 
         if (withdrawAllBtn) {
             withdrawAllBtn.onclick = () => {
+                const frozenAmount = getFrozenAmount();
+                const totalBalance = MockData.user.balance || 0;
+                const availableBalance = Math.max(0, totalBalance - frozenAmount);
                 if (input) {
-                    input.value = MockData.user.balance || 0;
+                    input.value = availableBalance;
                     validateInput();
                 }
             };
@@ -1695,6 +1741,15 @@ class App {
         if (confirmBtn) {
             confirmBtn.onclick = () => {
                 const amount = parseFloat(input.value);
+                const frozenAmount = getFrozenAmount();
+                const totalBalance = MockData.user.balance || 0;
+                const availableBalance = Math.max(0, totalBalance - frozenAmount);
+
+                if (amount > availableBalance) {
+                    alert('提现金额超出可提现余额');
+                    return;
+                }
+
                 MockData.user.balance -= amount;
 
                 const newTransaction = {
@@ -1710,10 +1765,15 @@ class App {
                 localStorage.setItem('cargoUserBalance', MockData.user.balance.toString());
                 localStorage.setItem('cargoUserTransactions', JSON.stringify(MockData.user.transactions));
 
-                if (successModal) {
-                    successModal.style.display = 'flex';
-                    if (successAmountDisplay) successAmountDisplay.textContent = `¥${amount.toFixed(2)}`;
-                }
+                hidePanel();
+                this.renderWalletDetail();
+
+                setTimeout(() => {
+                    if (successModal) {
+                        successModal.style.display = 'flex';
+                        if (successAmountDisplay) successAmountDisplay.textContent = `¥${amount.toFixed(2)}`;
+                    }
+                }, 300);
             };
         }
 
@@ -2731,7 +2791,7 @@ class App {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px; color: #999; border-bottom: 1px solid #f9f9f9; padding-bottom: 12px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="material-icons" style="font-size: 16px; color: #ccc;">assignment</span>
-                        <span>运单号：${wb.id}</span>
+                        <span>货单号：${wb.id}</span>
                     </div>
                     <span style="color: ${statusColor}; font-weight: 600;">${wb.status}</span>
                 </div>
@@ -2773,7 +2833,7 @@ class App {
             <div class="bg-light" style="min-height: 100%; padding-bottom: 0;" >
                 <header style="background: white; padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100;">
                     <span class="material-icons" onclick="app.navigate('waybills')" style="cursor: pointer; color: var(--text-main);">arrow_back_ios</span>
-                    <h2 style="font-size: 18px; margin: 0; font-weight: bold; flex: 1; text-align: center;">运单详情</h2>
+                    <h2 style="font-size: 18px; margin: 0; font-weight: bold; flex: 1; text-align: center;">货单详情</h2>
                     <span class="material-icons" style="color: var(--primary-color);">share</span>
                 </header>
 
@@ -2784,7 +2844,7 @@ class App {
                         <div style="font-size: 20px; font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                             ${wb.status}
                         </div>
-                        <div style="font-size: 13px; opacity: 0.9;">运单号：${wb.id}</div>
+                        <div style="font-size: 13px; opacity: 0.9;">货单号：${wb.id}</div>
                     </div>
 
                     <!-- Transport Info -->

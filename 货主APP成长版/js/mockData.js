@@ -41,7 +41,8 @@ const MockData = {
             weight: '5吨',
             driver: '李师傅',
             plate: '沪A·88888',
-            date: '2023-12-23'
+            date: '2023-12-23',
+            price: 2000.00
         },
         {
             id: 'WB20231222005',
@@ -52,7 +53,8 @@ const MockData = {
             weight: '2.5吨',
             driver: '王师傅',
             plate: '苏E·66666',
-            date: '2023-12-22'
+            date: '2023-12-22',
+            price: 1500.00
         },
         {
             id: 'WB20231220002',
@@ -63,7 +65,8 @@ const MockData = {
             weight: '8吨',
             driver: '张师傅',
             plate: '粤A·12345',
-            date: '2023-12-20'
+            date: '2023-12-20',
+            price: 3000.00
         },
         {
             id: 'WB20240101001',
@@ -74,7 +77,8 @@ const MockData = {
             weight: '3吨',
             driver: '',
             plate: '',
-            date: '2024-01-01'
+            date: '2024-01-01',
+            price: 1200.00
         },
         {
             id: 'WB20240102002',
@@ -85,7 +89,8 @@ const MockData = {
             weight: '1.5吨',
             driver: '赵师傅',
             plate: '粤C·99999',
-            date: '2024-01-02'
+            date: '2024-01-02',
+            price: 800.00
         },
         {
             id: 'WB20240103003',
@@ -96,7 +101,8 @@ const MockData = {
             weight: '10吨',
             driver: '孙师傅',
             plate: '粤E·55555',
-            date: '2024-01-03'
+            date: '2024-01-03',
+            price: 4500.00
         },
         {
             id: 'WB20240104004',
@@ -107,7 +113,8 @@ const MockData = {
             weight: '2吨',
             driver: '周师傅',
             plate: '粤L·77777',
-            date: '2024-01-04'
+            date: '2024-01-04',
+            price: 900.00
         },
         {
             id: 'WB20240105005',
@@ -118,7 +125,8 @@ const MockData = {
             weight: '1吨',
             driver: '',
             plate: '',
-            date: '2024-01-05'
+            date: '2024-01-05',
+            price: 500.00
         }
     ],
     statements: [
